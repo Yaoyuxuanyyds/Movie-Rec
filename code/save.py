@@ -31,11 +31,10 @@ users_embeddings, items_embeddings = Recmodel.getAllEmbeddings()
 import pickle
 
 # 保存 embeddings 到文件
-users_embeddings_file = './save/'+world.dataset+'/users_embeddings.npy'
-items_embeddings_file = './save/'+world.dataset+'/items_embeddings.npy'
+users_embeddings_file = './save/'+world.dataset+"reweight"+'/users_embeddings.npy'
+items_embeddings_file = './save/'+world.dataset+"reweight"+'/items_embeddings.npy'
 # 先创建保存 embeddings 的文件夹
-
-os.makedirs('./save/'+world.dataset+'/')
+os.makedirs('./save/'+world.dataset+"reweight"+'/')
 # 然后保存 embeddings
 np.save(users_embeddings_file, users_embeddings.detach().cpu().numpy())  # 确保数据在 CPU 上
 np.save(items_embeddings_file, items_embeddings.detach().cpu().numpy())
@@ -43,7 +42,7 @@ print(f"Saved user embeddings to {users_embeddings_file}")
 print(f"Saved item embeddings to {items_embeddings_file}")
 
 # 保存字典到文件
-maps_file = './save/'+world.dataset+'/dataset_maps.pkl'
+maps_file = './save/'+world.dataset+"reweight"+'/dataset_maps.pkl'
 dataset_maps = {
     'movie_map': dataset.movie_map,
     'user_map': dataset.user_map
