@@ -1,19 +1,16 @@
-import world
 import numpy as np
 import torch
 import utils
-import dataloader
-from pprint import pprint
 from utils import timer
 from time import time
 from tqdm import tqdm
 import model
 import multiprocessing
-from sklearn.metrics import roc_auc_score
-
+from main import config, topks
 
 CORES = multiprocessing.cpu_count() // 2
-
+GPU = torch.cuda.is_available()
+device = torch.device('cuda' if GPU else "cpu")
 
 def BPR_train_original(dataset, recommend_model, loss_class, epoch, neg_k=1, w=None):
     Recmodel = recommend_model
@@ -26,11 +23,11 @@ def BPR_train_original(dataset, recommend_model, loss_class, epoch, neg_k=1, w=N
     posItems = torch.Tensor(S[:, 1]).long()
     negItems = torch.Tensor(S[:, 2]).long()
 
-    users = users.to(world.device)
-    posItems = posItems.to(world.device)
-    negItems = negItems.to(world.device)
+    users = users.to(device)
+    posItems = posItems.to(device)
+    negItems = negItems.to(device)
     users, posItems, negItems = utils.shuffle(users, posItems, negItems)
-    total_batch = len(users) // world.config['bpr_batch_size'] + 1
+    total_batch = len(users) // config['bpr_batch_size'] + 1
     aver_loss = 0.
     for (batch_i,
          (batch_users,
@@ -38,11 +35,10 @@ def BPR_train_original(dataset, recommend_model, loss_class, epoch, neg_k=1, w=N
           batch_neg)) in enumerate(utils.minibatch(users,
                                                    posItems,
                                                    negItems,
-                                                   batch_size=world.config['bpr_batch_size'])):
+                                                   batch_size=config['bpr_batch_size'])):
         cri = bpr.stageOne(batch_users, batch_pos, batch_neg)
         aver_loss += cri
-        if world.tensorboard:
-            w.add_scalar(f'BPRLoss/BPR', cri, epoch * int(len(users) / world.config['bpr_batch_size']) + batch_i)
+        w.add_scalar(f'BPRLoss/BPR', cri, epoch * int(len(users) / config['bpr_batch_size']) + batch_i)
     aver_loss = aver_loss / total_batch
     time_info = timer.dict()
     timer.zero()
@@ -54,7 +50,7 @@ def test_one_batch(X):
     groundTrue = X[1]
     r = utils.getLabel(groundTrue, sorted_items)
     pre, recall, ndcg = [], [], []
-    for k in world.topks:
+    for k in topks:
         ret = utils.RecallPrecision_ATk(groundTrue, r, k)
         pre.append(ret['precision'])
         recall.append(ret['recall'])
@@ -65,18 +61,18 @@ def test_one_batch(X):
         
             
 def Test(dataset, Recmodel, epoch, w=None, multicore=0):
-    u_batch_size = world.config['test_u_batch_size']
+    u_batch_size = config['test_u_batch_size']
     dataset: utils.BasicDataset
     testDict: dict = dataset.testDict
     Recmodel: model.LightGCN
     # eval mode with no dropout
     Recmodel = Recmodel.eval()
-    max_K = max(world.topks)
+    max_K = max(topks)
     if multicore == 1:
         pool = multiprocessing.Pool(CORES)
-    results = {'precision': np.zeros(len(world.topks)),
-               'recall': np.zeros(len(world.topks)),
-               'ndcg': np.zeros(len(world.topks))}
+    results = {'precision': np.zeros(len(topks)),
+               'recall': np.zeros(len(topks)),
+               'ndcg': np.zeros(len(topks))}
     with torch.no_grad():
         users = list(testDict.keys())
         try:
@@ -93,7 +89,7 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
             allPos = dataset.getUserPosItems(batch_users)
             groundTrue = [testDict[u] for u in batch_users]
             batch_users_gpu = torch.Tensor(batch_users).long()
-            batch_users_gpu = batch_users_gpu.to(world.device)
+            batch_users_gpu = batch_users_gpu.to(device)
 
 
             rating = Recmodel.getUsersRating(batch_users_gpu)
@@ -106,12 +102,6 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
             rating[exclude_index, exclude_items] = -(1<<10)
             _, rating_K = torch.topk(rating, k=max_K)
             rating = rating.cpu().numpy()
-            # aucs = [ 
-            #         utils.AUC(rating[i],
-            #                   dataset, 
-            #                   test_data) for i, test_data in enumerate(groundTrue)
-            #     ]
-            # auc_record.extend(aucs)
             del rating
             users_list.append(batch_users)
             rating_list.append(rating_K.cpu())
@@ -133,13 +123,12 @@ def Test(dataset, Recmodel, epoch, w=None, multicore=0):
         results['precision'] /= float(len(users))
         results['ndcg'] /= float(len(users))
         # results['auc'] = np.mean(auc_record)
-        if world.tensorboard:
-            w.add_scalars(f'Test/Recall@{world.topks}',
-                          {str(world.topks[i]): results['recall'][i] for i in range(len(world.topks))}, epoch)
-            w.add_scalars(f'Test/Precision@{world.topks}',
-                          {str(world.topks[i]): results['precision'][i] for i in range(len(world.topks))}, epoch)
-            w.add_scalars(f'Test/NDCG@{world.topks}',
-                          {str(world.topks[i]): results['ndcg'][i] for i in range(len(world.topks))}, epoch)
+        w.add_scalars(f'Test/Recall@{topks}',
+                        {str(topks[i]): results['recall'][i] for i in range(len(topks))}, epoch)
+        w.add_scalars(f'Test/Precision@{topks}',
+                        {str(topks[i]): results['precision'][i] for i in range(len(topks))}, epoch)
+        w.add_scalars(f'Test/NDCG@{topks}',
+                        {str(topks[i]): results['ndcg'][i] for i in range(len(topks))}, epoch)
         if multicore == 1:
             pool.close()
         print(results)

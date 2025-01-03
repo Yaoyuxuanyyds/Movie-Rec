@@ -1,11 +1,3 @@
-'''
-Created on Mar 1, 2020
-Pytorch Implementation of LightGCN in
-Xiangnan He et al. LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation
-
-@author: Jianbai Ye (gusye@mail.ustc.edu.cn)
-'''
-import world
 import torch
 from torch import nn, optim
 import numpy as np
@@ -17,17 +9,8 @@ from model import PairWiseModel
 from sklearn.metrics import roc_auc_score
 import random
 import os
-try:
-    from cppimport import imp_from_filepath
-    from os.path import join, dirname
-    path = join(dirname(__file__), "sources/sampling.cpp")
-    sampling = imp_from_filepath(path)
-    sampling.seed(world.seed)
-    sample_ext = True
-except:
-    world.cprint("Cpp extension not loaded")
-    sample_ext = False
 
+from main import config, dataset, FILE_PATH
 
 class BPRLoss:
     def __init__(self,
@@ -52,13 +35,7 @@ class BPRLoss:
 
 def UniformSample_original(dataset, neg_ratio = 1):
     dataset : BasicDataset
-    allPos = dataset.allPos
-    start = time()
-    if sample_ext:
-        S = sampling.sample_negative(dataset.n_users, dataset.m_items,
-                                     dataset.trainDataSize, allPos, neg_ratio)
-    else:
-        S = UniformSample_original_python(dataset)
+    S = UniformSample_original_python(dataset)
     return S
 
 def UniformSample_original_python(dataset):
@@ -99,6 +76,9 @@ def UniformSample_original_python(dataset):
 # =====================utils====================================
 
 def set_seed(seed):
+    """
+    Set the random seed for reproducibility.
+    """
     np.random.seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
@@ -106,16 +86,17 @@ def set_seed(seed):
     torch.manual_seed(seed)
 
 def getFileName():
-    if world.model_name == 'mf':
-        file = f"mf-{world.dataset}-{world.config['latent_dim_rec']}.pth.tar"
-    elif world.model_name == 'lgn':
-        file = f"lgn-{world.dataset}-{world.config['lightGCN_n_layers']}-{world.config['latent_dim_rec']}.pth.tar"
-    return os.path.join(world.FILE_PATH,file)
+    """
+    Generate the file name for saving model weights.
+    """
+    file = f"lgn-{dataset}-{config['lightGCN_n_layers']}-{config['latent_dim_rec']}.pth.tar"
+    return os.path.join(FILE_PATH, file)
 
 def minibatch(*tensors, **kwargs):
-
-    batch_size = kwargs.get('batch_size', world.config['bpr_batch_size'])
-
+    """
+    Yield mini-batches from the input tensors.
+    """
+    batch_size = kwargs.get('batch_size', config['bpr_batch_size'])
     if len(tensors) == 1:
         tensor = tensors[0]
         for i in range(0, len(tensor), batch_size):
@@ -124,27 +105,29 @@ def minibatch(*tensors, **kwargs):
         for i in range(0, len(tensors[0]), batch_size):
             yield tuple(x[i:i + batch_size] for x in tensors)
 
-
 def shuffle(*arrays, **kwargs):
-
+    """
+    Shuffle the input arrays in unison.
+    """
     require_indices = kwargs.get('indices', False)
-
     if len(set(len(x) for x in arrays)) != 1:
-        raise ValueError('All inputs to shuffle must have '
-                         'the same length.')
-
+        raise ValueError('All inputs to shuffle must have the same length.')
     shuffle_indices = np.arange(len(arrays[0]))
     np.random.shuffle(shuffle_indices)
-
     if len(arrays) == 1:
         result = arrays[0][shuffle_indices]
     else:
         result = tuple(x[shuffle_indices] for x in arrays)
-
     if require_indices:
         return result, shuffle_indices
     else:
         return result
+
+def cprint(words: str):
+    """
+    Custom print function with color formatting.
+    """
+    print(f"\033[0;30;43m{words}\033[0m")
 
 
 class timer:

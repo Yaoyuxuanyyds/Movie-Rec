@@ -1,5 +1,3 @@
-
-
 import os
 from os.path import join
 import torch
@@ -7,8 +5,8 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from scipy.sparse import csr_matrix
-import world
-from world import cprint
+
+device = torch.device('cuda')
 
 
 class BasicDataset(Dataset):
@@ -61,9 +59,8 @@ class MoviesLoader(BasicDataset):
     Includes graph information for the MovieLens dataset.
     """
 
-    def __init__(self, path="../data/ml-latest-small", test_ratio=0.1, seed=2020):
+    def __init__(self, path="../data/ml-latest", test_ratio=0.1, seed=2020):
         # Train or test
-        cprint(f'loading [{path}]')
         self.path = path
         self.mode_dict = {'train': 0, "test": 1}
         self.mode = self.mode_dict['train']
@@ -183,7 +180,7 @@ class MoviesLoader(BasicDataset):
         assert len(index) == len(data)
 
         self.Graph = torch.sparse.FloatTensor(index.t(), data, torch.Size([self.n_users + self.m_items, self.n_users + self.m_items]))
-        self.Graph = self.Graph.coalesce().to(world.device)
+        self.Graph = self.Graph.coalesce().to(device)
 
         print("Graph is ready!")
         return self.Graph
