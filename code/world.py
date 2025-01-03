@@ -77,14 +77,3 @@ simplefilter(action="ignore", category=FutureWarning)
 def cprint(words : str):
     print(f"\033[0;30;43m{words}\033[0m")
 
-logo = r"""
-██╗      ██████╗ ███╗   ██╗
-██║     ██╔════╝ ████╗  ██║
-██║     ██║  ███╗██╔██╗ ██║
-██║     ██║   ██║██║╚██╗██║
-███████╗╚██████╔╝██║ ╚████║
-╚══════╝ ╚═════╝ ╚═╝  ╚═══╝
-"""
-# font: ANSI Shadow
-# refer to http://patorjk.com/software/taag/#p=display&f=ANSI%20Shadow&t=Sampling
-# print(logo)
