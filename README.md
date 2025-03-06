@@ -18,12 +18,13 @@ Our model is based on Light Graph Convolution Network (LightGCN). It addresses t
 </div><br/>
 
 Building upon LightGCN, **AdaptiveGCN** introduces weighted user-movie interactions (Figure above), moving beyond uniform aggregation. By assigning interaction weights based on user ratings, AdaptiveGCN emphasizes significant relationships, refining user and item embeddings dynamically. Its propagation rule adapts LightGCN’s structure by integrating these weights:
-$$
+
+\[
 \begin{split}
 e^{(k+1)}_u = \sum_{i \in N_u} \frac{w_{ui}}{\sqrt{|N_u||N_i|}} e^{(k)}_i & \\
 e^{(k+1)}_i = \sum_{u \in N_i} \frac{w_{iu}}{\sqrt{|N_i||N_u|}} e^{(k)}_u &
 \end{split}
-$$
+\]
 
 
 where $w_{ui}$ and $w_{iu}$ normalize interaction importance. By enhancing preference-aware modeling, AdaptiveGCN not only improves recommendation accuracy but also maintains efficiency, leveraging structural simplicity for more precise user-item predictions.
