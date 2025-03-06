@@ -41,22 +41,26 @@ Graph Neural Networks (GNNs) excel in modeling user-item interactions but strugg
 
 CatER assigns weights to each movie’s genres using a **TF-IDF-inspired** approach, adapted for genre relevance:
 
-$$w_{g} = \frac{\text{TF}_{g}}{\text{IDF}_{g}}$$
+```math
+w_{g} = \frac{\text{TF}_{g}}{\text{IDF}_{g}}
+```
 
 where $w_g$ represents the weight of genre $g$, adjusted by term frequency $TF$ and inverse document frequency $IDF$. To prevent dominance by frequent genres, weights are normalized:
 
-$$
+```math
 \tilde{w}_{g} = \sqrt{\frac{w^{'}_{k}}{\sum_{k} w^{'}_{k}}}, \quad w^{'}_{k} = \sqrt{\frac{w_{k}}{\sum_{k} w_{k}}}
-$$
+```
+
 ensuring a balanced contribution from each genre.
 
 #### (2) Reconstruction of Genre-Based Embeddings
 
 Using these weights, CatER reconstructs genre-enhanced embeddings via a weighted sum:
 
-$$
+```math
 e_{i} = \sum_{g \in G_i} \tilde{w}_{g} \cdot e_{g}
-$$
+```
+
 where $e_i$ is the reconstructed embedding for movie $ i$, aggregated from pre-trained genre embeddings $e_g$. This approach embeds **genre-specific signals** into item representations, enhancing cold-start recommendations while preserving content-rich information.
 
 By integrating genre-informed embeddings within the GNN framework, **CatER extends beyond simple category-based retrieval**, leveraging pre-trained embeddings to enrich recommendations even in sparse data scenarios. Ablation studies further demonstrate its effectiveness in improving prediction robustness.
