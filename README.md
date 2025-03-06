@@ -19,12 +19,12 @@ Our model is based on Light Graph Convolution Network (LightGCN). It addresses t
 
 Building upon LightGCN, **AdaptiveGCN** introduces weighted user-movie interactions (Figure above), moving beyond uniform aggregation. By assigning interaction weights based on user ratings, AdaptiveGCN emphasizes significant relationships, refining user and item embeddings dynamically. Its propagation rule adapts LightGCN’s structure by integrating these weights:
 
-\[
+```math
 \begin{split}
 e^{(k+1)}_u = \sum_{i \in N_u} \frac{w_{ui}}{\sqrt{|N_u||N_i|}} e^{(k)}_i & \\
 e^{(k+1)}_i = \sum_{u \in N_i} \frac{w_{iu}}{\sqrt{|N_i||N_u|}} e^{(k)}_u &
 \end{split}
-\]
+```
 
 
 where $w_{ui}$ and $w_{iu}$ normalize interaction importance. By enhancing preference-aware modeling, AdaptiveGCN not only improves recommendation accuracy but also maintains efficiency, leveraging structural simplicity for more precise user-item predictions.
@@ -41,9 +41,8 @@ Graph Neural Networks (GNNs) excel in modeling user-item interactions but strugg
 
 CatER assigns weights to each movie’s genres using a **TF-IDF-inspired** approach, adapted for genre relevance:
 
-$$
-w_{g} = \frac{\text{TF}_{g}}{\text{IDF}_{g}}
-$$
+$$w_{g} = \frac{\text{TF}_{g}}{\text{IDF}_{g}}$$
+
 where $w_g$ represents the weight of genre $g$, adjusted by term frequency $TF$ and inverse document frequency $IDF$. To prevent dominance by frequent genres, weights are normalized:
 
 $$
