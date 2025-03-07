@@ -61,6 +61,6 @@ Using these weights, CatER reconstructs genre-enhanced embeddings via a weighted
 e_{i} = \sum_{g \in G_i} \tilde{w}_{g} \cdot e_{g}
 ```
 
-where $e_i$ is the reconstructed embedding for movie $ i$, aggregated from pre-trained genre embeddings $e_g$. This approach embeds **genre-specific signals** into item representations, enhancing cold-start recommendations while preserving content-rich information.
+where $e_i$ is the reconstructed embedding for movie $i$, aggregated from pre-trained genre embeddings $e_g$. This approach embeds **genre-specific signals** into item representations, enhancing cold-start recommendations while preserving content-rich information.
 
 By integrating genre-informed embeddings within the GNN framework, **CatER extends beyond simple category-based retrieval**, leveraging pre-trained embeddings to enrich recommendations even in sparse data scenarios. Ablation studies further demonstrate its effectiveness in improving prediction robustness.
